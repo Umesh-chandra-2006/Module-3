@@ -1,2 +1,2 @@
-const Batch = require('../../schema/Batch');
+const Batch = require('../schema/Batch');
 module.exports = Batch;

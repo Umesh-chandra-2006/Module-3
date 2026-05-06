@@ -1,2 +1,2 @@
-const Group = require('../../schema/Group');
+const Group = require('../schema/Group');
 module.exports = Group;
