@@ -56,6 +56,7 @@ const getBatchById = async (req, res) => {
       total_groups: groups.length,
     });
   } catch (err) {
+    if (err.name === 'CastError') return res.status(404).json({ error: 'Batch not found' });
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -82,6 +83,7 @@ const assignManager = async (req, res) => {
       message: 'Manager assigned successfully',
     });
   } catch (err) {
+    if (err.name === 'CastError') return res.status(404).json({ error: 'Group not found' });
     return res.status(500).json({ error: 'Internal server error' });
   }
 };

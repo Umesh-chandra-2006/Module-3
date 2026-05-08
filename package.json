@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "NODE_ENV=development nodemon index.js",
-    "test": "node tests/module3.test.js",
-    "test:integration": "node tests/integration.test.js"
+    "test": "NODE_ENV=test node tests/module3.test.js",
+    "test:integration": "NODE_ENV=test node tests/integration.test.js"
   },
   "keywords": [
     "batch",

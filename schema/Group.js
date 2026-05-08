@@ -13,17 +13,11 @@ const GroupSchema = new mongoose.Schema(
       required: true,
     },
     manager_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      type: String,
       default: null, // null = unassigned
     },
     members: {
-      type: [
-        {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'User',
-        },
-      ],
+      type: [String],
       validate: {
         validator: (arr) => arr.length <= 7,
         message: 'A group cannot have more than 7 members',

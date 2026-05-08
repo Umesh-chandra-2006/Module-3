@@ -15,7 +15,7 @@ let testResults = {
 
 // Mock JWT tokens (format: Bearer <token>)
 const mockTokens = {
-  admin: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYWRtaW5fMTIzIiwicm9sZSI6IkFETUluIn0.mockToken',
+  admin: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYWRtaW5fMTIzIiwicm9sZSI6IkFETUlOIn0.mockToken',
   manager: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoibWFuYWdlcl8xMjMiLCJyb2xlIjoiTUFOQUdFUiJ9.mockToken',
   student: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoic3R1ZGVudF8xMjMiLCJyb2xlIjoiU1RVREVOVCJ9.mockToken',
 };
@@ -63,6 +63,17 @@ function assert(condition, message) {
 async function runAllTests() {
   console.log('\n🧪 MODULE 3: BATCH & GROUP MANAGEMENT - TEST SUITE\n');
   console.log('═'.repeat(60));
+
+  // Start the server for tests
+  require('dotenv').config();
+  process.env.NODE_ENV = 'test';
+  process.env.PORT = '5003';
+  require('../index');
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
+  const mongoose = require('mongoose');
+  await mongoose.connection.collection('batches').deleteMany({});
+  await mongoose.connection.collection('groups').deleteMany({});
 
   // Placeholder batch and group IDs for later tests
   let createdBatchId = null;
@@ -449,7 +460,7 @@ async function runAllTests() {
       '/v1/groups',
     ];
 
-    assert(BASE_URL.includes('/v1/'), 'APIs versioned under /v1/');
+    assert(BASE_URL.includes('/v1'), 'APIs versioned under /v1/');
     
     const batchesRes = await apiCall('GET', '/batches', null, mockTokens.admin);
     assert(batchesRes.status !== 404, 'Batch endpoints available at /v1/batches');

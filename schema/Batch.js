@@ -8,8 +8,7 @@ const BatchSchema = new mongoose.Schema(
       trim: true,
     },
     created_by: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User', // ADMIN only
+      type: String,
       required: true,
     },
     is_archived: {

@@ -26,6 +26,7 @@ const getGroupById = async (req, res) => {
 
     return res.status(200).json(group);
   } catch (err) {
+    if (err.name === 'CastError') return res.status(404).json({ error: 'Group not found' });
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -54,6 +55,7 @@ const getGroupMembers = async (req, res) => {
       total_members: group.members.length,
     });
   } catch (err) {
+    if (err.name === 'CastError') return res.status(404).json({ error: 'Group not found' });
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -77,6 +79,7 @@ const validateMembership = async (req, res) => {
       belongs_to_group: isMember || isManager,
     });
   } catch (err) {
+    if (err.name === 'CastError') return res.status(404).json({ error: 'Group not found' });
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
