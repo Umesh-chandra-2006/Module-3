@@ -6,7 +6,8 @@
 const axios = require('axios');
 
 // Configuration
-const BASE_URL = 'http://localhost:5003/v1';
+const TEST_PORT = 5005; // Dedicated port for tests to avoid EADDRINUSE conflicts
+const BASE_URL = `http://localhost:${TEST_PORT}/v1`;
 let testResults = {
   passed: 0,
   failed: 0,
@@ -15,13 +16,13 @@ let testResults = {
 
 // Mock JWT tokens (format: Bearer <token>)
 const mockTokens = {
-  admin: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYWRtaW5fMTIzIiwicm9sZSI6IkFETUluIn0.mockToken',
-  manager: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoibWFuYWdlcl8xMjMiLCJyb2xlIjoiTUFOQUdFUiJ9.mockToken',
-  student: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoic3R1ZGVudF8xMjMiLCJyb2xlIjoiU1RVREVOVCJ9.mockToken',
+  admin: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjAxYWM1YmEwMDAwMDAwMDAwMDAwMDAxIiwicm9sZSI6IkFETUlOIn0.mockToken',
+  manager: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjAxYWM1YmEwMDAwMDAwMDAwMDAwMDAyIiwicm9sZSI6Ik1BTkFHRVIifQ.mockToken',
+  student: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjAxYWM1YmEwMDAwMDAwMDAwMDAwMDAzIiwicm9sZSI6IlNUVURFTlQifQ.mockToken',
 };
 
 // Mock student IDs (simulating data from Module 2)
-const mockStudentIds = Array.from({ length: 50 }, (_, i) => `student_${String(i + 1).padStart(3, '0')}`);
+const mockStudentIds = Array.from({ length: 50 }, (_, i) => `601ac5ba0000000000000${String(i + 1).padStart(3, '0')}`);
 
 // Helper function to make API calls
 async function apiCall(method, endpoint, data = null, token = mockTokens.admin) {
@@ -63,6 +64,25 @@ function assert(condition, message) {
 async function runAllTests() {
   console.log('\n🧪 MODULE 3: BATCH & GROUP MANAGEMENT - TEST SUITE\n');
   console.log('═'.repeat(60));
+
+  // Start the server for tests
+  require('dotenv').config();
+  process.env.NODE_ENV = 'test';
+  process.env.PORT = TEST_PORT.toString();
+  require('../index');
+
+  const mongoose = require('mongoose');
+  
+  // Explicitly wait for the database connection to be established
+  if (mongoose.connection.readyState !== 1) {
+    await new Promise((resolve, reject) => {
+      mongoose.connection.once('open', resolve);
+      mongoose.connection.once('error', reject);
+    });
+  }
+
+  await mongoose.connection.collection('batches').deleteMany({});
+  await mongoose.connection.collection('groups').deleteMany({});
 
   // Placeholder batch and group IDs for later tests
   let createdBatchId = null;
@@ -271,7 +291,7 @@ async function runAllTests() {
 
   if (createdGroupIds.length > 0) {
     const groupId = createdGroupIds[0];
-    const testUserId = 'student_001';
+    const testUserId = mockStudentIds[0];
 
     {
       const res = await apiCall(
@@ -320,7 +340,7 @@ async function runAllTests() {
 
   if (createdGroupIds.length > 0) {
     const groupId = createdGroupIds[0];
-    const managerId = 'manager_001';
+    const managerId = '601ac5ba0000000000000002'; // Matches the Mock Manager Token
 
     {
       const res = await apiCall(
@@ -421,7 +441,7 @@ async function runAllTests() {
     ];
 
     for (const testCase of testCases) {
-      const ids = Array.from({ length: testCase.students }, (_, i) => `user_${i}`);
+      const ids = Array.from({ length: testCase.students }, (_, i) => `601ac5ba0000000000000${String(i + 1).padStart(3, '0')}`);
       const res = await apiCall(
         'POST',
         '/batches',
@@ -449,7 +469,7 @@ async function runAllTests() {
       '/v1/groups',
     ];
 
-    assert(BASE_URL.includes('/v1/'), 'APIs versioned under /v1/');
+    assert(BASE_URL.includes('/v1'), 'APIs versioned under /v1/');
     
     const batchesRes = await apiCall('GET', '/batches', null, mockTokens.admin);
     assert(batchesRes.status !== 404, 'Batch endpoints available at /v1/batches');

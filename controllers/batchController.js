@@ -6,13 +6,12 @@ const createBatch = async (req, res) => {
   try {
     const { name, student_ids } = req.body;
 
-    if (!name || !student_ids || student_ids.length === 0) {
-      return res.status(400).json({ error: 'name and student_ids are required' });
+    if (!name || !Array.isArray(student_ids) || student_ids.length === 0) {
+      return res.status(400).json({ error: 'name and a non-empty student_ids array are required' });
     }
 
     const batch = new Batch({
       name,
-      student_ids,
       created_by: req.user.user_id,
     });
     await batch.save();
@@ -29,8 +28,8 @@ const createBatch = async (req, res) => {
       created_at: batch.created_at,
     });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('Error creating batch:', err);
+    return res.status(500).json({ error: 'Failed to create batch' });
   }
 };
 
@@ -39,13 +38,15 @@ const getAllBatches = async (req, res) => {
     const batches = await Batch.find().sort({ created_at: -1 });
     return res.status(200).json(batches);
   } catch (err) {
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('Error fetching all batches:', err);
+    return res.status(500).json({ error: 'Failed to fetch batches' });
   }
 };
 
 const getBatchById = async (req, res) => {
   try {
-    const batch = await Batch.findById(req.params.batch_id);
+    const { batch_id } = req.params;
+    const batch = await Batch.findById(batch_id);
     if (!batch) return res.status(404).json({ error: 'Batch not found' });
 
     const groups = await Group.find({ batch_id: batch._id });
@@ -56,12 +57,15 @@ const getBatchById = async (req, res) => {
       total_groups: groups.length,
     });
   } catch (err) {
-    return res.status(500).json({ error: 'Internal server error' });
+    if (err.name === 'CastError') return res.status(404).json({ error: 'Invalid batch ID format' });
+    console.error(`Error fetching batch ${req.params.batch_id}:`, err);
+    return res.status(500).json({ error: 'Failed to fetch batch' });
   }
 };
 
 const assignManager = async (req, res) => {
   try {
+    const { group_id } = req.params;
     const { manager_id } = req.body;
 
     if (!manager_id) {
@@ -69,7 +73,7 @@ const assignManager = async (req, res) => {
     }
 
     const group = await Group.findByIdAndUpdate(
-      req.params.group_id,
+      group_id,
       { manager_id },
       { new: true }
     );
@@ -82,7 +86,9 @@ const assignManager = async (req, res) => {
       message: 'Manager assigned successfully',
     });
   } catch (err) {
-    return res.status(500).json({ error: 'Internal server error' });
+    if (err.name === 'CastError') return res.status(404).json({ error: 'Invalid group ID format' });
+    console.error(`Error assigning manager to group ${req.params.group_id}:`, err);
+    return res.status(500).json({ error: 'Failed to assign manager' });
   }
 };
 
